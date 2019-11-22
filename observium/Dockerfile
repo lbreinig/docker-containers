@@ -3,7 +3,7 @@
 # See https://github.com/phusion/baseimage-docker/blob/master/Changelog.md for
 # a list of version numbers.
 FROM phusion/baseimage:0.11
-MAINTAINER uberchuckie <uberchuckie@gmail.com>
+MAINTAINER Luke Breinig <lbreinig@gmail.com>
 
 # Set correct environment variables.
 ENV HOME /root
@@ -44,19 +44,12 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0xf1656f24c74cd
 
 # Install Observium prereqs
 RUN apt-get update -q && \
-    apt-get install -y --no-install-recommends mariadb-server mariadb-client \
+    apt-get install -y --no-install-recommends mariadb-client php7.2-ldap\
       libapache2-mod-php7.2 php7.2-cli php7.2-mysql php7.2-mysqli php7.2-gd php7.2-json \
-      php-pear snmp fping python-mysqldb rrdtool subversion whois mtr-tiny at \
+      php-pear snmp fping python-mysqldb rrdcached rrdtool subversion whois mtr-tiny at \
       nmap ipmitool graphviz imagemagick apache2 \
       wget pwgen at libvirt-bin && \
     apt-get update -q -y
-
-# Tweak my.cnf
-RUN sed -i -e 's#\(bind-address.*=\).*#\1 127.0.0.1#g' /etc/mysql/my.cnf && \
-    sed -i -e 's#\(log_error.*=\).*#\1 /config/databases/mysql_safe.log#g' /etc/mysql/my.cnf && \
-    sed -i -e 's/\(user.*=\).*/\1 nobody/g' /etc/mysql/my.cnf && \
-    echo '[mysqld]' > /etc/mysql/conf.d/innodb_file_per_table.cnf && \
-    echo 'innodb_file_per_table' >> /etc/mysql/conf.d/innodb_file_per_table.cnf
 
 RUN mkdir -p /opt/observium/firstrun /opt/observium/logs /opt/observium/rrd /config && \
     cd /opt && \
@@ -76,10 +69,10 @@ RUN mkdir /etc/service/apache2
 COPY apache2.sh /etc/service/apache2/run
 RUN chmod +x /etc/service/apache2/run
 
+COPY rrdcached /etc/default/rrdcached
+
 COPY firstrun.sh /etc/my_init.d/firstrun.sh
-COPY mariadb.sh /etc/service/mariadb/run
 RUN chmod +x /etc/my_init.d/firstrun.sh && \
-    chmod +x /etc/service/mariadb/run && \
     chown -R nobody:users /opt/observium && \
     chmod 755 -R /opt/observium && \
     chown -R nobody:users /config && \
