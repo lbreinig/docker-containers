@@ -62,7 +62,8 @@ COPY patches/update/184.sql /opt/observium/update
 RUN chown nobody:users /opt/observium/update/184.sql && \
     chmod 755 /opt/observium/update/184.sql
 
-RUN a2enmod rewrite
+RUN phpenmod mcrypt && \
+    a2enmod rewrite
 
 RUN mkdir /etc/service/apache2
 COPY apache2.sh /etc/service/apache2/run
@@ -75,7 +76,10 @@ RUN chmod +x /etc/my_init.d/firstrun.sh && \
     chown -R nobody:users /opt/observium && \
     chmod 755 -R /opt/observium && \
     chown -R nobody:users /config && \
-    chmod 755 -R /config
+    chmod 755 -R /config && \
+    chown -R nobody:users /var/log/mysql* && \
+    chown -R nobody:users /var/lib/mysql && \
+    chown -R nobody:users /etc/mysql
 
 # Configure apache2 to serve Observium app
 COPY apache2.conf /etc/apache2/apache2.conf
